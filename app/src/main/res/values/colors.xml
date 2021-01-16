@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:android="http://schemas.android.com/apk/res/android">
+    <color name="blue">#FF0000CC</color>
+    <color name="green">#FF00CC00</color>
+    <color name="yellow">#FFDDDD00</color>
+    <color name="red">#FFDD0000</color>
+    <integer-array name="ballColors">
+        <item>@color/blue</item>
+        <item>@color/green</item>
+        <item>@color/yellow</item>
+        <item>@color/red</item>
+    </integer-array>
+    <color name="white">#FFFFFFFF</color>
+    <color name="colorBackground">@color/white</color>
+    <color name="black">#FF000000</color>
+    <color name="colorForeground">@color/black</color>
+</resources>
