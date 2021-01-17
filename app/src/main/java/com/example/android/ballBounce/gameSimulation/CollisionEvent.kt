@@ -18,4 +18,9 @@ class CollisionEvent(val collidables: Array<CollidableEntity>, val collisionTime
             }
         }
     }
+
+    fun equals(otherEvent: CollisionEvent): Boolean {
+        return ((otherEvent.collidables.contains(this.collidables[0]))
+                && (otherEvent.collidables.contains(this.collidables[1])))
+    }
 }

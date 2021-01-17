@@ -1,7 +1,12 @@
 package com.example.android.ballBounce.gameSimulation
 
 interface MobileEntity {
-    fun travel(dt: Float)
+    fun getPotentialColliders(collisionGrid: CollisionGrid): List<CollidableEntity>
+
+    //Return negative result if no collision will happen
+    fun getCollisionTime(other: CollidableEntity): Float
+
     fun reactToCollisions(collisionGrid: CollisionGrid)
-    //fun enforceCompatibility(collisionGrid: CollisionGrid): Boolean
+
+    fun travel(dt: Float)
 }

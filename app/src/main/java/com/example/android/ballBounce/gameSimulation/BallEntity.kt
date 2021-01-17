@@ -4,6 +4,8 @@ import com.example.android.ballBounce.paintableShapes.PaintableCircle
 import com.example.android.ballBounce.paintableShapes.PaintableShape
 import com.example.android.ballBounce.utility.Vector
 import kotlin.math.min
+import kotlin.math.pow
+import kotlin.math.sqrt
 
 const val INCHING_FACTOR = 0.01f
 
@@ -117,7 +119,7 @@ class BallEntity() : GameEntity(), CollidableEntity, PaintableEntity, MobileEnti
         } else {
             collidedItems.forEach { it ->
                 when (it) {
-                    is BallEntity -> forceBallCompatibility(it,collisionGrid)
+                    is BallEntity -> forceBallCompatibility(it, collisionGrid)
                     is BarrierEntity -> forceBarrierCompatibility(it, collisionGrid)
                 }
             }
@@ -158,24 +160,54 @@ class BallEntity() : GameEntity(), CollidableEntity, PaintableEntity, MobileEnti
         this.refreshCollisionGridMark(collisionGrid)
     }
 
-    fun getCollidedItems(collisionGrid: CollisionGrid): List<CollidableEntity>? {
-        var checkedEntities = mutableListOf<CollidableEntity>()
+    override fun getPotentialColliders(collisionGrid: CollisionGrid): List<CollidableEntity> {
+        val potentialColliders = mutableListOf<CollidableEntity>()
         if (collisionGridCell == null) {
-            return null
+            return potentialColliders
         }
-        collisionGrid.getCollisionKeys(collisionGridCell!!).forEach { it ->
-            collisionGrid.getCellEntities(it)
-                ?.let { entities ->
-                    entities.forEach { entityBeingChecked ->
-                        if (!checkedEntities.contains(entityBeingChecked)) {
-                            if ((entityBeingChecked !== this) && (this.collided(entityBeingChecked))) {
-                                checkedEntities.add(entityBeingChecked)
-                            }
+        collisionGrid.getCollisionKeys(collisionGridCell!!)
+            .forEach { key ->
+                collisionGrid.getCellEntities(key)?.let { collidableList ->
+                    collidableList.forEach {
+                        if ((!potentialColliders.contains(it)) && (it !== this)) {
+                            potentialColliders.add(it)
                         }
                     }
                 }
+            }
+        return potentialColliders
+    }
+
+    override fun getCollisionTime(other: CollidableEntity): Float {
+        return when (other) {
+            is BallEntity -> getCollisionTimeWithBall(other)
+            is BarrierEntity -> getCollisionTimeWithBarrier(other)
+            else -> -1.0f
         }
-        return checkedEntities.toList()
+    }
+
+    private fun getCollisionTimeWithBarrier(barrierEntity: BarrierEntity): Float {
+        val vRel = barrierEntity.barrierUnitNormal()
+            .times(this.velocity.dot(barrierEntity.barrierUnitNormal()))
+
+        //If velocity parallel to barrier or away, no collision possible
+        if (vRel.dot(barrierEntity.lineEndToPoint(position)) >= 0f) {
+            return -1.0f
+        }
+        return (barrierEntity.pointBarrierDistance(position)/(vRel.mag()))
+    }
+
+    private fun getCollisionTimeWithBall(otherBall: BallEntity): Float {
+        val dR = this.position.minus(otherBall.position)
+        val dV = this.velocity.minus(otherBall.velocity)
+        val coeffA = dR.x.pow(2)+dR.y.pow(2)-(this.radius+otherBall.radius).pow(2)
+        val coeffB = (2f)*(dR.x*dV.x+dR.y*dV.y)
+        val coeffC = dV.x.pow(2)+dV.y.pow(2)
+        val discriminant = coeffB.pow(2)-4*coeffA*coeffC
+        if (discriminant <= 0) {
+            return -1.0f
+        }
+        return ((-coeffB)+sqrt(discriminant))/((2f)*coeffA)
     }
 
     private fun collidedWithBall(otherBall: BallEntity): Boolean {

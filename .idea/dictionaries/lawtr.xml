@@ -2,8 +2,11 @@
   <dictionary name="lawtr">
     <words>
       <w>accel</w>
+      <w>acoeff</w>
+      <w>coeff</w>
       <w>collidable</w>
       <w>collidables</w>
+      <w>colliders</w>
       <w>comparer</w>
       <w>coords</w>
       <w>databinding</w>

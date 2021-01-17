@@ -63,6 +63,10 @@ open class BarrierEntity : GameEntity(), PaintableEntity, CollidableEntity {
         return abs(lineToPoint.dot(barrierUnitNormal()))
     }
 
+    fun lineEndToPoint(point: Vector): Vector {
+        return point.minus(start!!)
+    }
+
     fun barrierUnitNormal(): Vector {
         if (unitNormal == null) {
             unitNormal = end!!.minus(start!!).unitNormal()
