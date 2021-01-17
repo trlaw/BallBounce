@@ -58,12 +58,12 @@ open class BarrierEntity : GameEntity(), PaintableEntity, CollidableEntity {
         }
     }
 
-    private fun pointBarrierDistance(point: Vector): Float {
+    fun pointBarrierDistance(point: Vector): Float {
         val lineToPoint = point.minus(start!!)
         return abs(lineToPoint.dot(barrierUnitNormal()))
     }
 
-    private fun barrierUnitNormal(): Vector {
+    fun barrierUnitNormal(): Vector {
         if (unitNormal == null) {
             unitNormal = end!!.minus(start!!).unitNormal()
         }

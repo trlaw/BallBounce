@@ -16,10 +16,6 @@ class MainActivityViewModel() : ViewModel() {
 
     }
 
-    fun flushPlayerLineBuffer() {
-        playerBarrierBuffer.forEach { barrier -> entitySim?.addPlayerBarrier(barrier) }
-        playerBarrierBuffer.clear()
-    }
 
     fun initialize(screenDims: Vector) {
         entitySim = entitySim ?: EntitySimulator()
@@ -36,16 +32,13 @@ class MainActivityViewModel() : ViewModel() {
         }
     }
 
-    fun reportGravity(gravVector: Vector) {
-        if (gravityVector != null) {
-            entitySim?.takeGravity(gravVector)
-        }
+    fun reportGravity() {
+            entitySim?.takeGravity(gravityVector)
     }
 
     fun getDrawObjects(): PaintableShapeList? {
         return entitySim?.getPaintableObjects()
     }
-
 
     fun tryRunGame() {
         if (entitySim?.entitySimulationState == EntitySimulationState.INITIALIZED) {

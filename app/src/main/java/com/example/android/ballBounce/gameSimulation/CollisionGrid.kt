@@ -4,6 +4,7 @@ import com.example.android.ballBounce.utility.Vector
 import com.example.android.ballBounce.utility.invokeAllOrderedPairs
 import kotlin.math.abs
 import kotlin.math.floor
+import kotlin.math.min
 
 //Collection for pre-sorting objects coarsely by position for collision detection
 //The neighboring cell references returned by getCollisionKeys will only cover all
@@ -30,6 +31,10 @@ class CollisionGrid(private val boundary: RectangleEntity, private val maxEntity
         }
     }
 
+    fun getMinCellDimension(): Float {
+        return min(cellWidth,cellHeight)
+    }
+
     fun getCellEntities(key: Pair<Int, Int>): MutableSet<CollidableEntity>? {
         return gridMap[key]
     }
@@ -44,17 +49,22 @@ class CollisionGrid(private val boundary: RectangleEntity, private val maxEntity
     }
 
     fun markGridCell(key: Pair<Int, Int>, item: CollidableEntity): Unit {
+
         if ((item != null) && (item !in gridMap[key]!!)) {
             gridMap[key]?.add(item)
         }
     }
 
     fun getKeyForPosition(position: Vector): Pair<Int, Int> {
-        var xKey = floor((position.x-boundary.lowerBound.x) / cellWidth).toInt()
-        var yKey = ((position.y-boundary.lowerBound.y) / cellHeight).toInt()
-        if (xKey == numWidthCells) {xKey--}
+        var xKey = floor((position.x - boundary.lowerBound.x) / cellWidth).toInt()
+        var yKey = floor((position.y - boundary.lowerBound.y) / cellHeight).toInt()
+        if (xKey >= numWidthCells) {
+            xKey = numWidthCells-1
+        }
         if (xKey < 0) xKey = 0
-        if (yKey == numHeightCells) {yKey--}
+        if (yKey >= numHeightCells) {
+            yKey = numHeightCells-1
+        }
         if (yKey < 0) yKey = 0
         return Pair(xKey, yKey)
     }

@@ -14,6 +14,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.databinding.DataBindingUtil
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.coroutineScope
+import com.example.android.ballBounce.databinding.ActivityMainBinding
 import com.example.android.ballBounce.utility.LimitedSpeedRunner
 import com.example.android.ballBounce.utility.Vector
 import com.example.android.ballBounce.utility.rotateSensorToDisplayCoords
@@ -24,7 +25,6 @@ import com.example.android.ballBounce.view.canvasPainter.FitContentPainter
 import com.example.android.ballBounce.view.canvasPainter.LayoutTransitionPainter
 import com.example.android.ballBounce.view.canvasPainter.ShapePainter
 import com.example.android.ballBounce.viewModel.MainActivityViewModel
-import com.example.android.ballCorral.databinding.ActivityMainBinding
 
 
 //Minimum interval between frames (state update + frame buffer redraw)
@@ -164,7 +164,7 @@ class MainActivity : AppCompatActivity(), SensorEventListener {
     private fun workCompleteCallback() {
         shapePainter?.paintableShapeList = viewModel?.getDrawObjects()
         shapePainter?.assignPaintFactories()
-        viewModel?.flushPlayerLineBuffer()
+        viewModel?.reportGravity()
         binding.mainBallView.invalidate()
     }
 

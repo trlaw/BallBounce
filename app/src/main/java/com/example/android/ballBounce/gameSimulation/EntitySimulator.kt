@@ -4,9 +4,10 @@ import com.example.android.ballBounce.paintableShapes.PaintableShapeList
 import com.example.android.ballBounce.utility.Vector
 
 
-const val BALL_ADD_TIME = 100f
+const val BALL_ADD_TIME = 10f
 const val BALL_LIMIT = 50
-const val MAX_BARRIERS = 50
+const val GRAVITY_STRENGTH = 0.02f
+const val MAX_COMPATIBILITY_ITERATIONS = 100
 
 class EntitySimulator() {
 
@@ -19,6 +20,7 @@ class EntitySimulator() {
     private var restartFlag: Boolean = false
     var gravityVector = Vector.zero()
     var simTime = 0f
+    var ballCount: Int = 0
 
     //Game Simulation Lifecycle Methods
 
@@ -54,6 +56,9 @@ class EntitySimulator() {
             //Add ball to game if spawn conditions satisfied
             tryAddBall()
 
+            //Apply gravity to sensitive objects
+            applyGravity(gravityVector.times(dt))
+
             //Advance mobile object positions
             updateMobileEntityPositions(dt)
 
@@ -62,6 +67,21 @@ class EntitySimulator() {
 
             //Adjust mobile objects according to collisions
             processMobileEntityCollisions()
+
+            //Enforce compatibility
+            var iterNumber = 0
+            while (iterNumber < MAX_COMPATIBILITY_ITERATIONS) {
+                val rslt: Boolean  = entityList.all {
+                    when (it) {
+                        is MobileEntity -> it.enforceCompatibility(collisionGrid)
+                        else -> true
+                    }
+                }
+                if (rslt) {
+                    break
+                }
+                iterNumber++
+            }
 
             //Remove mobile entities from collision grid since position may change on next step
             unMarkMobileEntitiesFromGrid()
@@ -73,6 +93,13 @@ class EntitySimulator() {
         restartIfRequested()
     }
 
+    private fun applyGravity(deltaV: Vector) {
+        for (gameEntity in entityList) {
+            if (gameEntity is GravitySensitiveEntity) {
+                gameEntity.applyGravityDeltaV(deltaV)
+            }
+        }
+    }
 
     //State Update Helper Methods
     private fun markCollisionGridWithMobileEntities() {
@@ -109,39 +136,15 @@ class EntitySimulator() {
         }
     }
 
-    //Entity Adders
-    fun addPlayerBarrier(barrier: Pair<Vector, Vector>) {
-        if (entitySimulationState == EntitySimulationState.RUNNING) {
-            tryAddBarrier(barrier)
-        }
-    }
-
-    private fun tryAddBarrier(barrier: Pair<Vector, Vector>) {
-        val newBarrier = playerBarrierFactory.create().apply {
-            start = barrier.first
-            end = barrier.second
-        }
-        //Disallow barriers in contact with ball
-        if (entityList.none { gameEntity ->
-                ((gameEntity is BallEntity) && (gameEntity.collided(newBarrier)))
-            }) {
-            addEntity(newBarrier)
-            playerBarrierList.add(newBarrier)
-            if (playerBarrierList.size > MAX_BARRIERS) {
-                markForRemoval(playerBarrierList.removeAt(0))
-            }
-        }
-    }
-
     private fun tryAddBall() {
 
         //Add ball only if enough time elapsed
-        if (simTime < (getScore() * BALL_ADD_TIME)) {
+        if (simTime < (ballCount * BALL_ADD_TIME)) {
             return
         }
 
         //Don't add if already at maximum allowed ball count
-        if ((entityList.count { it -> it is BallEntity }) >= BALL_LIMIT) {
+        if (ballCount >= BALL_LIMIT) {
             return
         }
 
@@ -153,7 +156,7 @@ class EntitySimulator() {
                 ((gameEntity is CollidableEntity) && (gameEntity.collided(newBall)))
             }) {
             addEntity(newBall)
-            incrementScore()
+            ballCount++
         }
     }
 
@@ -241,7 +244,7 @@ class EntitySimulator() {
     }
 
     fun takeGravity(gravVector: Vector) {
-        gravityVector = gravVector
+        gravityVector = gravVector.times(GRAVITY_STRENGTH)
     }
 }
 

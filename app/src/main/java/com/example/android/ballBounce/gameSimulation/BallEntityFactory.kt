@@ -1,7 +1,7 @@
 package com.example.android.ballBounce.gameSimulation
 
 const val NUM_COLORS = 4
-const val BASE_COR = 1.02f
+const val BASE_COR = 0.98f
 const val BASE_BALL_RADIUS = 30f
 const val MAX_SPEED = BASE_BALL_RADIUS / (5f)
 
@@ -17,5 +17,4 @@ open class BallEntityFactory {
             hasMaxSpeed = true
         }
     }
-
 }
