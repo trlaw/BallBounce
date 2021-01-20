@@ -1,7 +1,6 @@
 package com.example.android.ballBounce.view.canvasPainter
 
 import android.graphics.Canvas
-import android.util.Log
 import com.example.android.ballBounce.utility.Rectangle
 import com.example.android.ballBounce.utility.Vector
 import com.example.android.ballBounce.view.CanvasDrawView
@@ -46,7 +45,6 @@ class LayoutTransitionPainter(contentPainter: CanvasPainter) : CanvasPainter() {
     private fun applyTransitionTransformation(canvas: Canvas, viewRectangle: Rectangle) {
         val animationExtent =
             ((System.nanoTime() - transitionStartTime).toDouble()) / (TRANSITION_NS.toDouble())
-        Log.d("Animation Extent","$animationExtent")
         canvas.save()
         translateOrigin(canvas, viewRectangle, animationExtent)
         scaleCanvas(canvas, viewRectangle, animationExtent)

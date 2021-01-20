@@ -1,6 +1,8 @@
 package com.example.android.ballBounce.utility
 
 import android.view.Surface
+import kotlin.math.pow
+import kotlin.math.sqrt
 import kotlin.random.Random
 
 fun randFloatInRange(floatMin: Float, floatMax: Float): Float {
@@ -35,4 +37,14 @@ fun invokeAllOrderedPairs(indexOneSize: Int, indexTwoSize: Int, funToInvoke: (In
 
 fun vectorMidpoint(v1:Vector,v2:Vector): Vector {
     return Vector((v1.x+v2.x)/(2f),(v1.y+v2.y)/(2f))
+}
+
+fun quadraticSolution(a: Float,b: Float,c: Float) : Pair<Float?,Float?> {
+    var outPair: Pair<Float?,Float?> = Pair(null,null)
+    val discriminant = b.pow(2)-4*a*c
+    if (discriminant > 0) {
+        outPair = Pair<Float?,Float?>(((-b)+(if (b >= 0f) -1f else 1f)*sqrt(discriminant))/((2f)*a),
+            ((2f)*c)/((-b)+(if (b >= 0f) -1f else 1f)*sqrt(discriminant)))
+    }
+    return outPair
 }

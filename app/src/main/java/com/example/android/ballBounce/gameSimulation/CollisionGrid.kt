@@ -50,7 +50,7 @@ class CollisionGrid(private val boundary: RectangleEntity, private val maxEntity
 
     fun markGridCell(key: Pair<Int, Int>, item: CollidableEntity): Unit {
 
-        if ((item != null) && (item !in gridMap[key]!!)) {
+        if (item !in gridMap[key]!!) {
             gridMap[key]?.add(item)
         }
     }

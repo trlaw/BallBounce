@@ -51,7 +51,7 @@ open class BarrierEntity : GameEntity(), PaintableEntity, CollidableEntity {
         return false
     }
 
-    override fun handleCollision(otherEntity: CollidableEntity) {
+    override fun handleCollision(otherEntity: CollidableEntity, dt: Float) {
         when (otherEntity) {
             is BallEntity -> handleCollisionWithBall(otherEntity)
             else -> return
@@ -80,18 +80,9 @@ open class BarrierEntity : GameEntity(), PaintableEntity, CollidableEntity {
             barrierUnitNormal().times(ballEntity.velocity.dot(barrierUnitNormal()))
         val vTangentToBarrier = ballEntity.velocity.minus(vNormToBarrier)
 
-        //Refine collision time, go backwards according to overlap of ball & barrier
-        val overlap = (width / (2f) + ballEntity.radius) - pointBarrierDistance(ballEntity.position)
-        val dt = overlap / (vNormToBarrier.mag())
-        if (overlap > 0) {
-            ballEntity.travel(-dt)
-        }
-
         //Adjust velocity for bounce
         ballEntity.velocity = vTangentToBarrier.plus(vNormToBarrier.times(-ballEntity.cOr))
 
-        //Update ball position with corrected collision time
-        ballEntity.travel(dt)
     }
 
     override fun markCollisionGrid(collisionGrid: CollisionGrid) {
