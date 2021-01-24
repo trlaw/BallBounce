@@ -8,4 +8,5 @@ interface MobileEntity {
     fun getCollisionTime(other: CollidableEntity): Float
 
     fun travel(dt: Float)
+
 }

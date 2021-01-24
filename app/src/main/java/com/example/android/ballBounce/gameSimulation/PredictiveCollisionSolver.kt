@@ -1,15 +1,13 @@
 package com.example.android.ballBounce.gameSimulation
 
-import java.util.*
 import kotlin.Float.Companion.NEGATIVE_INFINITY
+import kotlin.Float.Companion.POSITIVE_INFINITY
 import kotlin.math.sqrt
-
-const val MAX_SIMULTANEOUS = 10 //Max collisions to process at any one time step
 
 class PredictiveCollisionSolver {
 
     companion object {
-        fun simulateCollisions(
+        fun simulateMotion(
             collidableList: List<CollidableEntity>,
             collisionGrid: CollisionGrid,
             dt: Float
@@ -20,7 +18,7 @@ class PredictiveCollisionSolver {
                 val nextStep = if ((dt - dtProgress) < maxDt) {
                     dt - dtProgress
                 } else maxDt
-                subStepAdvance(collidableList, collisionGrid, nextStep, dt)
+                subStepAdvance(collidableList, collisionGrid, nextStep)
                 refreshCollisionGrid(collidableList, collisionGrid)
                 dtProgress += nextStep
             }
@@ -30,143 +28,69 @@ class PredictiveCollisionSolver {
             collidableList: List<CollidableEntity>,
             collisionGrid: CollisionGrid,
             subDt: Float,
-            dt: Float
         ) {
-            var collisionQueue =
-                PriorityQueue<CollisionEvent>(500, CollisionEvent.CollisionEventComparer)
-            var dtProgress = 0f
-
-            //Populate collision queue (initial pass)
+            //Update each mobile entity according to policy
             collidableList.forEach { collidableEntity ->
-                if (collidableEntity is MobileEntity) {
-                    collisionQueue = addCollisionEvents(
-                        collidableEntity,
-                        collisionGrid,
-                        subDt,
-                        dtProgress,
-                        collisionQueue
-                    )
+                if (collidableEntity is BallEntity) {
+                    advanceBallState(collidableEntity, collisionGrid, subDt)
                 }
             }
-
-            var lastEvent: CollisionEvent? = null
-            var nextEvent = collisionQueue.poll()
-            var repeatsThisTime = 0
-            while (nextEvent != null) {
-
-                if ((lastEvent != null) && (lastEvent.collisionTime == nextEvent.collisionTime)) {
-                    repeatsThisTime++
-                } else {
-                    repeatsThisTime = 0
-                }
-
-                //Avoid getting stuck on collision repair cycles
-                if (repeatsThisTime > MAX_SIMULTANEOUS) {
-                    val simultaneousEvents =
-                        collisionQueue.filter { it.collisionTime == nextEvent.collisionTime }
-                    simultaneousEvents.forEach { collisionQueue.remove(it) }
-                    lastEvent = nextEvent
-                    nextEvent = collisionQueue.poll()
-                    continue
-                }
-
-                if ((lastEvent != null) && (lastEvent.equals(nextEvent))) {
-                    lastEvent = nextEvent
-                    nextEvent = collisionQueue.poll()
-                    continue
-                }
-
-
-                //Update positions
-                travelWithoutCollisions(collidableList, nextEvent.collisionTime, dtProgress)
-
-                //Apply collision conditions
-                nextEvent.collidables[0].handleCollision(nextEvent.collidables[1],nextEvent.collisionTime-dtProgress)
-
-                //Update time
-                dtProgress = nextEvent.collisionTime
-
-                //Remove events from queue in which mobile entities participated.  Add any
-                //newly created events
-                for (i in 0..1) {
-                    if (nextEvent.collidables[i] is MobileEntity) {
-                        val eventsToPurge = mutableListOf<CollisionEvent>()
-                        collisionQueue.forEach { collisionEvent ->
-                            if (collisionEvent.collidables.contains(nextEvent.collidables[i])) {
-                                eventsToPurge.add(collisionEvent)
-                            }
-                        }
-                        eventsToPurge.forEach { collisionQueue.remove(it) }
-                        collisionQueue = addCollisionEvents(
-                            nextEvent.collidables[i] as MobileEntity,
-                            collisionGrid,
-                            subDt,
-                            dtProgress,
-                            collisionQueue,
-                        )
-                    }
-                }
-                lastEvent = nextEvent
-                nextEvent = collisionQueue.poll()
-            }
-            travelWithoutCollisions(collidableList, subDt, dtProgress)
+            applyGravityAcceleration(collidableList, subDt)
         }
 
-        private fun travelWithoutCollisions(
-            collidableList: List<CollidableEntity>,
-            endTime: Float,
-            dtProgress: Float
-        ) {
-            if (endTime > dtProgress) {
-                for (collidableEntity in collidableList) {
-                    if (collidableEntity is MobileEntity) {
-                        collidableEntity.travel(endTime - dtProgress)
-                    }
-                }
-            }
-        }
-
-        private fun addCollisionEvents(
-            collidableEntity: MobileEntity,
+        private fun advanceBallState(
+            ballEntity: BallEntity,
             collisionGrid: CollisionGrid,
-            subDt: Float,
-            dtProgress: Float,
-            collisionQueue: PriorityQueue<CollisionEvent>,
-        ): PriorityQueue<CollisionEvent> {
-            var modifiedQueue = collisionQueue
-            collidableEntity.getPotentialColliders(collisionGrid)
-                .forEach { otherEntity ->
-                    val timeRslt = collidableEntity.getCollisionTime(otherEntity)
-                    if ((timeRslt >= 0f) && (timeRslt <= (subDt - dtProgress))) {
-                        val candidateEvent = CollisionEvent(
-                            arrayOf(collidableEntity as CollidableEntity, otherEntity),
-                            dtProgress + timeRslt
-                        )
-                        if (modifiedQueue.none { candidateEvent.equals(it) }) {
-                            if (!modifiedQueue.offer(candidateEvent)) {
-                                modifiedQueue = resizeQueue(modifiedQueue)
-                                modifiedQueue.add(candidateEvent)
-                            }
-                        }
-
-                    }
+            subDt: Float
+        ) {
+            var potentialColliders = ballEntity.getPotentialColliders(collisionGrid)
+            var earliestCollisionData = getNextCollision(ballEntity, potentialColliders)
+            val permittedDt =
+                if (earliestCollisionData.second < subDt) earliestCollisionData.second else subDt
+            val oldPosition = ballEntity.position
+            ballEntity.travel(permittedDt)
+            val positionDelta = ballEntity.position.minus(oldPosition)
+            ballEntity.refreshCollisionGridMark(collisionGrid)
+            potentialColliders = ballEntity.getPotentialColliders(collisionGrid)
+            var wayClear = true
+            potentialColliders.forEach {
+                if (ballEntity.collided(it) && it is BallEntity) {
+                    wayClear = false
+                    ballEntity.handleCollision(it, 0f)
                 }
-            return modifiedQueue
-        }
-
-        private fun resizeQueue(inputQueue: PriorityQueue<CollisionEvent>): PriorityQueue<CollisionEvent> {
-            val biggerQueue = PriorityQueue<CollisionEvent>(
-                inputQueue.size * 2,
-                CollisionEvent.CollisionEventComparer
-            )
-            inputQueue.forEach { existingEvent ->
-                biggerQueue.add(
-                    existingEvent
-                )
             }
-            return biggerQueue
+            if (!wayClear) {
+                ballEntity.position = ballEntity.position.minus(positionDelta)
+                ballEntity.refreshCollisionGridMark(collisionGrid)
+            }
+            if (permittedDt < subDt) {
+                ballEntity.handleCollision(earliestCollisionData.first!!, permittedDt)
+            }
         }
 
+        private fun applyGravityAcceleration(collidableList: List<CollidableEntity>, dt: Float) {
+            for (collidableEntity in collidableList) {
+                if (collidableEntity is BallEntity) {
+                    collidableEntity.applyGravityAcceleration(dt)
+                }
+            }
+        }
+
+        private fun getNextCollision(
+            ballEntity: BallEntity,
+            potentialColliders: List<CollidableEntity>
+        ): Pair<CollidableEntity?, Float> {
+            var earliestCollider: CollidableEntity? = null
+            var earliestCollisionTime: Float = POSITIVE_INFINITY
+            for (potentialCollider in potentialColliders) {
+                val collisionTime = ballEntity.getCollisionTime(potentialCollider)
+                if ((collisionTime > -0.5f) && (collisionTime < earliestCollisionTime)) {
+                    earliestCollider = potentialCollider
+                    earliestCollisionTime = collisionTime
+                }
+            }
+            return Pair(earliestCollider, earliestCollisionTime)
+        }
 
         private fun refreshCollisionGrid(
             collidableList: List<CollidableEntity>,
@@ -185,7 +109,7 @@ class PredictiveCollisionSolver {
         ): Float {
             return ((collisionGrid.getMinCellDimension() / (2.0f) - getMaxRadius(collidableList)) / getMaxVelocity(
                 collidableList
-            ))*(1f)
+            )) * (1f)
         }
 
         private fun getMaxRadius(collidableList: List<CollidableEntity>): Float {

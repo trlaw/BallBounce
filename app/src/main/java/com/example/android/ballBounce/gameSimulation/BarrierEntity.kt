@@ -21,7 +21,6 @@ open class BarrierEntity : GameEntity(), PaintableEntity, CollidableEntity {
         }
     var startToEnd: Vector? = null
     var width: Float = 1f
-    var colorIndex: Int = 0
     var collisionCells: MutableSet<Pair<Int, Int>>? = null //Cache for collision cells touched
     var unitNormal: Vector? = null
 
@@ -51,7 +50,7 @@ open class BarrierEntity : GameEntity(), PaintableEntity, CollidableEntity {
         return false
     }
 
-    override fun handleCollision(otherEntity: CollidableEntity, dt: Float) {
+    override fun handleCollision(otherEntity: CollidableEntity, permittedDt: Float) {
         when (otherEntity) {
             is BallEntity -> handleCollisionWithBall(otherEntity)
             else -> return

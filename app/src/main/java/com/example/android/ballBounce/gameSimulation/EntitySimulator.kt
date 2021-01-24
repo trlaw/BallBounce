@@ -14,7 +14,9 @@ const val GRAVITY_STRENGTH = 0.02f
 //value in terms of execution time, which depends on the ratio of ball diameter to maximum entity
 //velocity per unit time.  Higher values result in fewer time steps, but longer executing steps,
 //since each entity must be checked against a greater number of entities for potential collision.
-const val GRID_SIZE = 1.2f
+const val GRID_SIZE = 2f
+const val SUBSAMPLE_FACTOR: Int = 2
+
 
 class EntitySimulator() {
 
@@ -64,14 +66,16 @@ class EntitySimulator() {
             tryAddBall()
 
             //Apply gravity to sensitive objects
-            applyGravity(gravityVector)
+            applyGravity()
 
             //Populate collision grid with mobile objects
             markCollisionGridWithMobileEntities()
 
             val compTime = measureTimeMillis {
                 //Adjust mobile objects including collision influences
-                PredictiveCollisionSolver.simulateCollisions(getCollidableList(), collisionGrid, dt)
+                for (i in 1..SUBSAMPLE_FACTOR) {
+                PredictiveCollisionSolver.simulateMotion(getCollidableList(), collisionGrid, dt/ SUBSAMPLE_FACTOR)
+                }
             }
             if ((simTime.toInt() % 50) == 0) {
                 Log.d(
@@ -89,10 +93,10 @@ class EntitySimulator() {
         restartIfRequested()
     }
 
-    private fun applyGravity(deltaV: Vector) {
+    private fun applyGravity() {
         for (gameEntity in entityList) {
             if (gameEntity is GravitySensitiveEntity) {
-                gameEntity.applyGravityDeltaV(deltaV)
+                gameEntity.applyGravity(gravityVector)
             }
         }
     }

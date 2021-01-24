@@ -4,5 +4,5 @@ import com.example.android.ballBounce.utility.Vector
 
 interface GravitySensitiveEntity
 {
-    fun applyGravityDeltaV(gravityDeltaV: Vector)
+    fun applyGravity(gravity: Vector)
 }

@@ -19,58 +19,40 @@ class BallEntity() : GameEntity(), CollidableEntity, PaintableEntity, MobileEnti
     var cOr: Float = 1f //Bounciness factor
     var collisionGridCell: Pair<Int, Int>? = null
     val maxSpeed = 10f
-    var gravity = Vector(0f,0f)
+    var gravity = Vector(0f, 0f)
 
     override fun travel(dt: Float): Unit {
-        if (velocity.mag() > maxSpeed) {
-            velocity = velocity.times(maxSpeed / velocity.mag())
-        }
+
         position = position.plus(velocity.times(dt))
+
+    }
+
+    fun applyGravityAcceleration(dt: Float) {
         velocity = velocity.plus(gravity.times(dt))
-
     }
 
-    fun copyBall(): BallEntity {
-        return BallEntity().apply {
-            position = this.position
-            velocity = this.velocity
-            radius = this.radius
-            colorIndex = this.colorIndex
-            cOr = this.cOr
-            collisionGridCell = this.collisionGridCell
-        }
-    }
-
-    override fun handleCollision(otherEntity: CollidableEntity, dt: Float) {
+    override fun handleCollision(otherEntity: CollidableEntity, basedOnDt: Float) {
         when (otherEntity) {
-            is BallEntity -> handleBallCollision(otherEntity, dt)
-            is BarrierEntity -> otherEntity.handleCollision(this, dt)
+            is BallEntity -> handleBallCollision(otherEntity, basedOnDt)
+            is BarrierEntity -> otherEntity.handleCollision(this, basedOnDt)
             else -> return
         }
     }
 
-    private fun handleBallCollision(otherBall: BallEntity, dt: Float) {
+    private fun handleBallCollision(otherBall: BallEntity, basedOnDt: Float) {
         //Position and velocity of otherBall
         val vel1minus2 = velocity.minus(otherBall.velocity)
         val pos1minus2 = position.minus(otherBall.position)
 
         //Update BallEntity velocity
         val vDot = vel1minus2.dot(pos1minus2.unitScaled())
-
-        val collisionCoR: Float =
-            min(cOr, otherBall.cOr)    //Arbitrary, sticky overrides bouncy
-        val vMultiplier = (collisionCoR) * vDot
-        velocity = velocity.plus(pos1minus2.unitScaled().times(-vMultiplier))
-        otherBall.velocity = otherBall.velocity.plus(pos1minus2.unitScaled().times(vMultiplier))
-
-        //Undo effect of gravity if there was a collision in last time step
-        velocity = velocity.minus(gravity.times(dt*100f))
-        otherBall.velocity = otherBall.velocity.minus(otherBall.gravity.times(dt*1f))
-
-        position = position.minus(gravity.times(dt.pow(2)))
-        otherBall.position = otherBall.position.minus(otherBall.gravity.times(dt.pow(2)))
-
-
+        if (vDot < 0) {
+            val collisionCoR: Float =
+                min(cOr, otherBall.cOr)    //Arbitrary, sticky overrides bouncy
+            val vMultiplier = (collisionCoR) * vDot
+            velocity = velocity.plus(pos1minus2.unitScaled().times(-vMultiplier))
+            otherBall.velocity = otherBall.velocity.plus(pos1minus2.unitScaled().times(vMultiplier))
+        }
     }
 
     override fun collided(otherEntity: CollidableEntity): Boolean {
@@ -148,11 +130,12 @@ class BallEntity() : GameEntity(), CollidableEntity, PaintableEntity, MobileEnti
 
     private fun getCollisionTimeWithBall(otherBall: BallEntity): Float {
         val dR = this.position.minus(otherBall.position)
-        val dV = this.velocity.minus(otherBall.velocity)
+        val dV = this.velocity
+        //.minus(otherBall.velocity)
 
-        //Immediate bounce away if balls found on top of each other
-        if (this.overlaps(otherBall) && ballsClosingDistance(dR, dV, 0f)) {
-            return 0f
+        //Do not register collision if balls moving away from each other
+        if (ballsSeparating(dR, dV, 0f)) {
+            return -1f
         }
 
         val coeffC = dR.x.pow(2) + dR.y.pow(2) - (this.radius + otherBall.radius).pow(2)
@@ -164,26 +147,22 @@ class BallEntity() : GameEntity(), CollidableEntity, PaintableEntity, MobileEnti
             return -1.0f
         }
         var potentialSolns = arrayOf(POSITIVE_INFINITY, POSITIVE_INFINITY)
-        if ((roots.first!! >= 0f) && ballsClosingDistance(dR, dV, roots.first!!)) {
+        if ((roots.first!! >= 0f) && !ballsSeparating(dR, dV, roots.first!!)) {
             potentialSolns[0] = roots.first!!
         }
-        if ((roots.second!! >= 0f) && ballsClosingDistance(dR, dV, roots.second!!)) {
+        if ((roots.second!! >= 0f) && !ballsSeparating(dR, dV, roots.second!!)) {
             potentialSolns[1] = roots.second!!
         }
         val bestSoln = min(potentialSolns[0], potentialSolns[1])
         return if (bestSoln == POSITIVE_INFINITY) -1.0f else bestSoln
     }
 
-    override fun applyGravityDeltaV(gravityVect: Vector) {
+    override fun applyGravity(gravityVect: Vector) {
         gravity = gravityVect
     }
 
-    fun ballsClosingDistance(dR: Vector, dV: Vector, dt: Float): Boolean {
-        return (0 > ((dR.x + dR.y) + dt * (dV.dot(dV))))
+    fun ballsSeparating(dR: Vector, dV: Vector, dt: Float): Boolean {
+        return ((dR.x * dV.x + dR.y * dV.y) + dt * dV.dot(dV)) >= 0
     }
 
-    fun overlaps(otherBall: BallEntity): Boolean {
-        val posDifference = this.position.minus(otherBall.position)
-        return posDifference.mag() < (this.radius + otherBall.radius)
-    }
 }
