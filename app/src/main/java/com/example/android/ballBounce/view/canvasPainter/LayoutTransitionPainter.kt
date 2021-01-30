@@ -24,10 +24,10 @@ class LayoutTransitionPainter(contentPainter: CanvasPainter) : CanvasPainter() {
     override fun paintViewCanvas(canvas: Canvas, view: CanvasDrawView) {
         val viewOrigin = IntArray(2)
         view.getLocationOnScreen(viewOrigin)
-        val viewOriginVector = Vector(viewOrigin[0].toFloat(), viewOrigin[1].toFloat())
+        val viewOriginVector = Vector(viewOrigin[0].toDouble(), viewOrigin[1].toDouble())
         val viewRectangle = Rectangle(
             viewOriginVector,
-            viewOriginVector.plus(Vector(view.width.toFloat(), view.height.toFloat()))
+            viewOriginVector.plus(Vector(view.width.toDouble(), view.height.toDouble()))
         )
         updateLastRectangleBounds(viewRectangle)
         if (delegatePainter == null) {
@@ -56,16 +56,16 @@ class LayoutTransitionPainter(contentPainter: CanvasPainter) : CanvasPainter() {
             lastRectangleBounds.height() / viewRectangle.height()
         )
         canvas.scale(
-            ((1.0 - animationExtent).toFloat()) * scaleVector.x + animationExtent.toFloat(),
-            ((1.0 - animationExtent).toFloat()) * scaleVector.y + animationExtent.toFloat(), 0f, 0f
+            (((1.0 - animationExtent).toFloat()) * scaleVector.x + animationExtent.toFloat()).toFloat(),
+            (((1.0 - animationExtent).toFloat()) * scaleVector.y + animationExtent.toFloat()).toFloat(), 0f, 0f
         )
     }
 
     private fun translateOrigin(canvas: Canvas, drawingSpace: Rectangle, animationExtent: Double) {
         val originDelta = lastRectangleBounds.lowerBounds.minus(drawingSpace.lowerBounds)
         canvas.translate(
-            ((1.0 - animationExtent).toFloat()) * originDelta.x,
-            ((1.0 - animationExtent).toFloat()) * originDelta.y
+            (((1.0 - animationExtent).toFloat()) * originDelta.x).toFloat(),
+            (((1.0 - animationExtent).toFloat()) * originDelta.y).toFloat()
         )
     }
 

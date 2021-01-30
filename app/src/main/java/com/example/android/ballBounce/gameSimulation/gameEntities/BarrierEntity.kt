@@ -1,5 +1,9 @@
 package com.example.android.ballBounce.gameSimulation
 
+import com.example.android.ballBounce.gameSimulation.gameEntities.BallEntity
+import com.example.android.ballBounce.gameSimulation.gameEntities.CollidableEntity
+import com.example.android.ballBounce.gameSimulation.gameEntities.GameEntity
+import com.example.android.ballBounce.gameSimulation.gameEntities.PaintableEntity
 import com.example.android.ballBounce.paintableShapes.PaintableLine
 import com.example.android.ballBounce.paintableShapes.PaintableShape
 import com.example.android.ballBounce.utility.Vector
@@ -9,6 +13,8 @@ import kotlin.math.abs
 enum class SegmentLocation {
     TOP, LEAF
 }
+
+const val BARRIER_COR = 0.5
 
 open class BarrierEntity : GameEntity(), PaintableEntity, CollidableEntity {
     var start: Vector? = null
@@ -20,7 +26,7 @@ open class BarrierEntity : GameEntity(), PaintableEntity, CollidableEntity {
             }
         }
     var startToEnd: Vector? = null
-    var width: Float = 1f
+    var width: Double = 1.0
     var collisionCells: MutableSet<Pair<Int, Int>>? = null //Cache for collision cells touched
     var unitNormal: Vector? = null
 
@@ -39,25 +45,25 @@ open class BarrierEntity : GameEntity(), PaintableEntity, CollidableEntity {
         val otherPosition = otherEntity.position
         val otherRadius = otherEntity.radius
         val pointLineDist = pointBarrierDistance(otherPosition)
-        if (pointLineDist < (width / (2f) + otherRadius)) {
+        if (pointLineDist < (width / (2.0) + otherRadius)) {
             //Line is finite length, check projection onto line
             val startToPoint = otherPosition.minus(start!!)
             val projectionCoordinate = startToPoint.dot(startToEnd!!.unitScaled())
-            if ((projectionCoordinate >= -otherRadius) && (projectionCoordinate <= (startToEnd!!.mag()+otherRadius))) {
+            if ((projectionCoordinate >= -otherRadius) && (projectionCoordinate <= (startToEnd!!.mag() + otherRadius))) {
                 return true
             }
         }
         return false
     }
 
-    override fun handleCollision(otherEntity: CollidableEntity, permittedDt: Float) {
+    override fun handleCollision(otherEntity: CollidableEntity, permittedDt: Double) {
         when (otherEntity) {
             is BallEntity -> handleCollisionWithBall(otherEntity)
             else -> return
         }
     }
 
-    fun pointBarrierDistance(point: Vector): Float {
+    fun pointBarrierDistance(point: Vector): Double {
         val lineToPoint = point.minus(start!!)
         return abs(lineToPoint.dot(barrierUnitNormal()))
     }
@@ -80,8 +86,16 @@ open class BarrierEntity : GameEntity(), PaintableEntity, CollidableEntity {
         val vTangentToBarrier = ballEntity.velocity.minus(vNormToBarrier)
 
         //Adjust velocity for bounce
-        ballEntity.velocity = vTangentToBarrier.plus(vNormToBarrier.times(-ballEntity.cOr))
+        ballEntity.velocity = vTangentToBarrier.plus(vNormToBarrier.times(-BARRIER_COR))
 
+        //Avoid ball getting stuck due to gravity re-initiating collision.  Subtract gravity
+        //component normal to barrier for next position update & prevent gravity update from
+        //3rd party object before next position update.
+        ballEntity.ignoreGravityUpdateOneShot = true
+        ballEntity.gravity =
+            ballEntity.gravity.minus(
+                barrierUnitNormal().times(barrierUnitNormal().dot(ballEntity.gravity))
+            )
     }
 
     override fun markCollisionGrid(collisionGrid: CollisionGrid) {

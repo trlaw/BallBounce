@@ -1,14 +1,14 @@
-package com.example.android.ballBounce.gameSimulation
+package com.example.android.ballBounce.gameSimulation.gameEntities
 
 import com.example.android.ballBounce.utility.Vector
 
 open class RectangleEntity(val lowerBound: Vector, val upperBound: Vector) : GameEntity() {
 
-    fun width(): Float {
+    fun width(): Double {
         return upperBound.x - lowerBound.x
     }
 
-    fun height(): Float {
+    fun height(): Double {
         return upperBound.y - lowerBound.y
     }
 

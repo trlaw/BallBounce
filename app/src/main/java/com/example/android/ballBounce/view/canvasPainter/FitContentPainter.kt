@@ -42,17 +42,17 @@ class FitContentPainter(contentPainter: CanvasPainter) : CanvasPainter() {
 
         //Translate objects so origin of content is coincident with view origin
         canvas.translate(
-            (-1f) * contentBounds.lowerBounds.x - viewBounds.lowerBounds.x,
-            (-1f) * contentBounds.lowerBounds.y - viewBounds.lowerBounds.y
+            ((-1f) * contentBounds.lowerBounds.x - viewBounds.lowerBounds.x).toFloat(),
+            ((-1f) * contentBounds.lowerBounds.y - viewBounds.lowerBounds.y).toFloat()
         )
 
         //Scale to fit objects inside view
-        canvas.scale(scaleFactor, scaleFactor)
+        canvas.scale(scaleFactor.toFloat(), scaleFactor.toFloat())
 
         //Center in letter-boxed dimension
         canvas.translate(
-            if (heightLimited) (0.5f) * (viewBounds.width() - scaleFactor * contentBounds.width()) else 0f,
-            if (heightLimited) 0f else (0.5f) * (viewBounds.height() - scaleFactor * contentBounds.height())
+            (if (heightLimited) (0.5) * (viewBounds.width() - scaleFactor * contentBounds.width()) else 0.0).toFloat(),
+            (if (heightLimited) 0.0 else (0.5) * (viewBounds.height() - scaleFactor * contentBounds.height())).toFloat()
         )
     }
 

@@ -3,6 +3,10 @@
     <words>
       <w>accel</w>
       <w>acoeff</w>
+      <w>adot</w>
+      <w>adots</w>
+      <w>asqr</w>
+      <w>cdot</w>
       <w>coeff</w>
       <w>collidable</w>
       <w>collidables</w>
@@ -14,6 +18,8 @@
       <w>grav</w>
       <w>immediates</w>
       <w>iter</w>
+      <w>jacobian</w>
+      <w>kvec</w>
       <w>nosensor</w>
       <w>paintable</w>
       <w>rgby</w>

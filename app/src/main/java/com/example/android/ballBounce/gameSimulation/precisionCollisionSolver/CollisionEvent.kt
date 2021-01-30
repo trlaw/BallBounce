@@ -1,5 +1,6 @@
-package com.example.android.ballBounce.gameSimulation
+package com.example.android.ballBounce.gameSimulation.precisionCollisionSolver
 
+import com.example.android.ballBounce.gameSimulation.gameEntities.CollidableEntity
 import java.util.*
 
 class CollisionEvent(val collidables: Array<CollidableEntity>, val collisionTime: Float) {

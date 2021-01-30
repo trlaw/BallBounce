@@ -3,21 +3,21 @@ package com.example.android.ballBounce.utility
 import kotlin.math.*
 import kotlin.random.Random.Default.nextFloat
 
-class Vector(val x: Float, val y: Float) {
-    var magCache: Float? = null
+class Vector(val x: Double, val y: Double) {
+    var magCache: Double? = null
     fun plus(other: Vector): Vector {
         return Vector(this.x + other.x, this.y + other.y)
     }
 
-    fun times(multiplier: Float): Vector {
+    fun times(multiplier: Double): Vector {
         return Vector(this.x * multiplier, this.y * multiplier)
     }
 
     fun minus(other: Vector): Vector {
-        return this.plus(other.times(-1f))
+        return this.plus(other.times(-1.0))
     }
 
-    fun dot(other: Vector): Float {
+    fun dot(other: Vector): Double {
         return this.x * other.x + this.y * other.y
     }
 
@@ -25,7 +25,7 @@ class Vector(val x: Float, val y: Float) {
         return ((this.x == other.x) && (this.y == other.y))
     }
 
-    fun mag(): Float {
+    fun mag(): Double {
         if (magCache == null) {
             magCache = sqrt(this.x.pow(2) + this.y.pow(2)) //Somewhat expensive op
         }
@@ -41,10 +41,10 @@ class Vector(val x: Float, val y: Float) {
     }
 
     fun unitNormal(): Vector {
-        if (y != 0f) {
-            return Vector(1f, -(x / y)).unitScaled()
+        if (y != 0.0) {
+            return Vector(1.0, -(x / y)).unitScaled()
         }
-        return Vector(0f, 1f)
+        return Vector(0.0, 1.0)
     }
 
     companion object {
@@ -57,12 +57,12 @@ class Vector(val x: Float, val y: Float) {
         }
 
         fun randomUnit(): Vector {
-            val angle: Float = (2f) * (PI.toFloat()) * nextFloat()
+            val angle: Double = (2.0) * (PI.toFloat()) * nextFloat()
             return Vector(cos(angle), sin(angle))
         }
 
         fun zero(): Vector {
-            return Vector(0f, 0f)
+            return Vector(0.0, 0.0)
         }
     }
 }

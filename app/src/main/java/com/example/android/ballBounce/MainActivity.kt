@@ -31,7 +31,7 @@ import com.example.android.ballBounce.viewModel.MainActivityViewModel
 const val FRAME_INTERVAL_MS: Long = 17
 
 //Simulation time (dimensionless) to advance per frame
-const val FRAME_SIM_TIME: Float = 1f
+const val FRAME_SIM_TIME: Double = 1.0
 
 class MainActivity : AppCompatActivity(), SensorEventListener {
 
@@ -145,7 +145,7 @@ class MainActivity : AppCompatActivity(), SensorEventListener {
         val dispRotation = binding?.mainBallView.display?.rotation
         if (dispRotation != null) {
             viewModel?.takeGravity(
-                rotateSensorToDisplayCoords(dispRotation, Vector(event.values[0], event.values[1]))
+                rotateSensorToDisplayCoords(dispRotation, Vector(event.values[0].toDouble(), event.values[1].toDouble()))
             )
         }
     }
@@ -171,7 +171,7 @@ class MainActivity : AppCompatActivity(), SensorEventListener {
     private fun getScreenDims(): Vector {
         val realMetrics = DisplayMetrics()
         windowManager.defaultDisplay.getRealMetrics(realMetrics)
-        return Vector(realMetrics.widthPixels.toFloat(),realMetrics.heightPixels.toFloat())
+        return Vector(realMetrics.widthPixels.toDouble(),realMetrics.heightPixels.toDouble())
     }
 
 }

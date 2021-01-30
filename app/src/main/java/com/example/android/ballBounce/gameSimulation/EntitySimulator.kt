@@ -1,21 +1,23 @@
 package com.example.android.ballBounce.gameSimulation
 
 import android.util.Log
+import com.example.android.ballBounce.gameSimulation.gameEntities.*
+import com.example.android.ballBounce.gameSimulation.precisionCollisionSolver.PredictiveCollisionSolver
 import com.example.android.ballBounce.paintableShapes.PaintableShapeList
 import com.example.android.ballBounce.utility.Vector
 import kotlin.system.measureTimeMillis
 
 
-const val BALL_ADD_TIME = 1f
+const val BALL_ADD_TIME = 1.0
 const val BALL_LIMIT = 100
-const val GRAVITY_STRENGTH = 0.02f
+const val GRAVITY_STRENGTH = 0.02
 
 //As implemented, multiplied by ballDiameter to get minimum grid cell size.  There is an ideal
 //value in terms of execution time, which depends on the ratio of ball diameter to maximum entity
 //velocity per unit time.  Higher values result in fewer time steps, but longer executing steps,
 //since each entity must be checked against a greater number of entities for potential collision.
-const val GRID_SIZE = 2f
-const val SUBSAMPLE_FACTOR: Int = 2
+const val GRID_SIZE = 2.0
+const val SUBSAMPLE_FACTOR: Int = 1
 
 
 class EntitySimulator() {
@@ -28,7 +30,7 @@ class EntitySimulator() {
     private var entitiesToRemove = mutableSetOf<GameEntity>()
     private var restartFlag: Boolean = false
     var gravityVector = Vector.zero()
-    var simTime = 0f
+    var simTime = 0.0
     var ballCount: Int = 0
 
     //Game Simulation Lifecycle Methods
@@ -58,7 +60,7 @@ class EntitySimulator() {
         restartFlag = true
     }
 
-    fun updateState(dt: Float) {
+    fun updateState(dt: Double) {
 
         if (entitySimulationState == EntitySimulationState.RUNNING) {
 
@@ -120,7 +122,7 @@ class EntitySimulator() {
         }
     }
 
-    private fun updateMobileEntityPositions(dt: Float) {
+    private fun updateMobileEntityPositions(dt: Double) {
         entityList.forEach { it ->
             if (it is MobileEntity) {
                 it.travel(dt)
@@ -218,7 +220,7 @@ class EntitySimulator() {
         //distance between any two points on an entity.  Argument source must be revised if add any
         //more mobile+collidable objects, or BallEntities no longer have common radius.
         collisionGrid =
-            CollisionGrid(gameBoundary!!, GRID_SIZE * (2f) * BallEntityFactory().create().radius)
+            CollisionGrid(gameBoundary!!, GRID_SIZE * (2.0) * BallEntityFactory().create().radius)
     }
 
     private fun resetEntityLists() {

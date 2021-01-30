@@ -1,5 +1,7 @@
 package com.example.android.ballBounce.gameSimulation
 
+import com.example.android.ballBounce.gameSimulation.gameEntities.CollidableEntity
+import com.example.android.ballBounce.gameSimulation.gameEntities.RectangleEntity
 import com.example.android.ballBounce.utility.Vector
 import com.example.android.ballBounce.utility.invokeAllOrderedPairs
 import kotlin.math.abs
@@ -12,11 +14,11 @@ import kotlin.math.min
 //distance between any two points, on any of the objects, is less than or equal to
 //maxEntitySize.  Objects may be larger than maxEntitySize by this measure, but in such case
 //they will need to registered in the grid inside every cell over which they extend
-class CollisionGrid(private val boundary: RectangleEntity, private val maxEntitySize: Float) {
+class CollisionGrid(private val boundary: RectangleEntity, private val maxEntitySize: Double) {
     private var numWidthCells: Int = 0
     private var numHeightCells: Int = 0
-    private var cellWidth: Float = 0f
-    private var cellHeight: Float = 0f
+    private var cellWidth: Double = 0.0
+    private var cellHeight: Double = 0.0
 
     private var gridMap: HashMap<Pair<Int, Int>, MutableSet<CollidableEntity>>
 
@@ -31,7 +33,7 @@ class CollisionGrid(private val boundary: RectangleEntity, private val maxEntity
         }
     }
 
-    fun getMinCellDimension(): Float {
+    fun getMinCellDimension(): Double {
         return min(cellWidth,cellHeight)
     }
 

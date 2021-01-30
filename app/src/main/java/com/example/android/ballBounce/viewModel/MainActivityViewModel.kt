@@ -22,7 +22,7 @@ class MainActivityViewModel() : ViewModel() {
         entitySim!!.initialize(screenDims)
     }
 
-    fun stepModel(dt: Float): Unit {
+    fun stepModel(dt: Double): Unit {
         entitySim?.updateState(dt)
     }
 

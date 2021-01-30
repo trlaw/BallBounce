@@ -1,37 +1,45 @@
-package com.example.android.ballBounce.gameSimulation
+package com.example.android.ballBounce.gameSimulation.gameEntities
 
+import com.example.android.ballBounce.gameSimulation.*
 import com.example.android.ballBounce.paintableShapes.PaintableCircle
 import com.example.android.ballBounce.paintableShapes.PaintableShape
 import com.example.android.ballBounce.utility.Vector
 import com.example.android.ballBounce.utility.quadraticSolution
-import kotlin.Float.Companion.POSITIVE_INFINITY
+import com.example.android.ballBounce.utility.saferMinus
+import kotlin.Double.Companion.POSITIVE_INFINITY
 import kotlin.math.min
 import kotlin.math.pow
 
+const val NEGATIVE_TIME_EPS = -0.0001
 
 class BallEntity() : GameEntity(), CollidableEntity, PaintableEntity, MobileEntity,
     GravitySensitiveEntity {
 
     lateinit var position: Vector
     lateinit var velocity: Vector
-    var radius: Float = 0f
+    var radius: Double = 0.0
     var colorIndex: Int = 0
-    var cOr: Float = 1f //Bounciness factor
+    var cOr: Double = 1.0 //Bounciness factor
     var collisionGridCell: Pair<Int, Int>? = null
-    val maxSpeed = 10f
-    var gravity = Vector(0f, 0f)
+    val maxSpeed = 10.0
+    var gravity = Vector(0.0, 0.0)
+    var ignoreGravityUpdateOneShot = false
 
-    override fun travel(dt: Float): Unit {
+    override fun travel(dt: Double): Unit {
 
+        if (velocity.mag() > maxSpeed) {
+            velocity = velocity.times(maxSpeed / velocity.mag())
+        }
+        //if (velocity.times(dt).mag() > (0.01*radius)) {
         position = position.plus(velocity.times(dt))
-
+        //}
     }
 
-    fun applyGravityAcceleration(dt: Float) {
+    fun applyGravityAcceleration(dt: Double) {
         velocity = velocity.plus(gravity.times(dt))
     }
 
-    override fun handleCollision(otherEntity: CollidableEntity, basedOnDt: Float) {
+    override fun handleCollision(otherEntity: CollidableEntity, basedOnDt: Double) {
         when (otherEntity) {
             is BallEntity -> handleBallCollision(otherEntity, basedOnDt)
             is BarrierEntity -> otherEntity.handleCollision(this, basedOnDt)
@@ -39,7 +47,7 @@ class BallEntity() : GameEntity(), CollidableEntity, PaintableEntity, MobileEnti
         }
     }
 
-    private fun handleBallCollision(otherBall: BallEntity, basedOnDt: Float) {
+    private fun handleBallCollision(otherBall: BallEntity, basedOnDt: Double) {
         //Position and velocity of otherBall
         val vel1minus2 = velocity.minus(otherBall.velocity)
         val pos1minus2 = position.minus(otherBall.position)
@@ -47,7 +55,7 @@ class BallEntity() : GameEntity(), CollidableEntity, PaintableEntity, MobileEnti
         //Update BallEntity velocity
         val vDot = vel1minus2.dot(pos1minus2.unitScaled())
         if (vDot < 0) {
-            val collisionCoR: Float =
+            val collisionCoR: Double =
                 min(cOr, otherBall.cOr)    //Arbitrary, sticky overrides bouncy
             val vMultiplier = (collisionCoR) * vDot
             velocity = velocity.plus(pos1minus2.unitScaled().times(-vMultiplier))
@@ -105,63 +113,73 @@ class BallEntity() : GameEntity(), CollidableEntity, PaintableEntity, MobileEnti
         return potentialColliders
     }
 
-    override fun getCollisionTime(other: CollidableEntity): Float {
+    override fun getCollisionTime(other: CollidableEntity): Double {
         return when (other) {
             is BallEntity -> getCollisionTimeWithBall(other)
             is BarrierEntity -> getCollisionTimeWithBarrier(other)
-            else -> -1.0f
+            else -> -1.0
         }
     }
 
-    private fun getCollisionTimeWithBarrier(barrierEntity: BarrierEntity): Float {
+    private fun getCollisionTimeWithBarrier(barrierEntity: BarrierEntity): Double {
         val vRel = barrierEntity.barrierUnitNormal()
             .times(this.velocity.dot(barrierEntity.barrierUnitNormal()))
 
         //If velocity parallel to barrier or away, no collision possible
-        if (vRel.dot(barrierEntity.lineEndToPoint(position)) >= 0f) {
-            return -1.0f
+        if (vRel.dot(barrierEntity.lineEndToPoint(position)) >= 0.0) {
+            return -1.0
         }
 
-        val barrierDist: Float =
-            barrierEntity.pointBarrierDistance(position) - (radius + barrierEntity.width / (2f))
+        val barrierDist: Double =
+            (barrierEntity.pointBarrierDistance(position)
+                .pow(2) - (radius + barrierEntity.width / (2.0)).pow(2)) / (barrierEntity.pointBarrierDistance(
+                position
+            ) + radius + barrierEntity.width / (2.0))
 
-        return (if (barrierDist < 0) 0f else barrierDist) / vRel.mag()
+        return (if (barrierDist < 0.0) 0.0 else barrierDist) / vRel.mag()
     }
 
-    private fun getCollisionTimeWithBall(otherBall: BallEntity): Float {
+    private fun getCollisionTimeWithBall(otherBall: BallEntity): Double {
         val dR = this.position.minus(otherBall.position)
         val dV = this.velocity
-        //.minus(otherBall.velocity)
 
         //Do not register collision if balls moving away from each other
-        if (ballsSeparating(dR, dV, 0f)) {
-            return -1f
+        if (ballsSeparating(dR, dV, 0.0)) {
+            return -1.0
         }
 
-        val coeffC = dR.x.pow(2) + dR.y.pow(2) - (this.radius + otherBall.radius).pow(2)
+        val coeffC = saferMinus(
+            dR.x.pow(2) + dR.y.pow(2),
+            (this.radius + otherBall.radius).pow(2)
+        )
         val coeffB = (2f) * (dR.x * dV.x + dR.y * dV.y)
         val coeffA = dV.x.pow(2) + dV.y.pow(2)
 
         val roots = quadraticSolution(coeffA, coeffB, coeffC)
         if (roots.first == null) {
-            return -1.0f
+            return -1.0
         }
         var potentialSolns = arrayOf(POSITIVE_INFINITY, POSITIVE_INFINITY)
-        if ((roots.first!! >= 0f) && !ballsSeparating(dR, dV, roots.first!!)) {
+        if ((roots.first!! >= NEGATIVE_TIME_EPS) && !ballsSeparating(dR, dV, roots.first!!)) {
             potentialSolns[0] = roots.first!!
         }
-        if ((roots.second!! >= 0f) && !ballsSeparating(dR, dV, roots.second!!)) {
+        if ((roots.second!! >= NEGATIVE_TIME_EPS) && !ballsSeparating(dR, dV, roots.second!!)) {
             potentialSolns[1] = roots.second!!
         }
         val bestSoln = min(potentialSolns[0], potentialSolns[1])
-        return if (bestSoln == POSITIVE_INFINITY) -1.0f else bestSoln
+        //Log.d("BallPositions","")
+        return if (bestSoln == POSITIVE_INFINITY) -1.0 else if (bestSoln < 0.0) 0.0 else bestSoln
     }
 
     override fun applyGravity(gravityVect: Vector) {
-        gravity = gravityVect
+        if (ignoreGravityUpdateOneShot) {
+            ignoreGravityUpdateOneShot = false
+        } else {
+            gravity = gravityVect
+        }
     }
 
-    fun ballsSeparating(dR: Vector, dV: Vector, dt: Float): Boolean {
+    private fun ballsSeparating(dR: Vector, dV: Vector, dt: Double): Boolean {
         return ((dR.x * dV.x + dR.y * dV.y) + dt * dV.dot(dV)) >= 0
     }
 

@@ -1,11 +1,13 @@
 package com.example.android.ballBounce.gameSimulation
 
+import com.example.android.ballBounce.gameSimulation.gameEntities.BallEntity
+import com.example.android.ballBounce.gameSimulation.gameEntities.RectangleEntity
 import com.example.android.ballBounce.utility.Vector
 import kotlin.math.min
 import kotlin.random.Random
 
-const val BALL_INIT_V_MIN = 3f
-const val BALL_INIT_V_MAX = 6f
+const val BALL_INIT_V_MIN = 3.0
+const val BALL_INIT_V_MAX = 6.0
 
 class GameBoundary(dimensions: Vector) : RectangleEntity(Vector.zero(), dimensions) {
 
@@ -14,7 +16,7 @@ class GameBoundary(dimensions: Vector) : RectangleEntity(Vector.zero(), dimensio
     }
 
     fun getSpawnArea(): RectangleEntity {
-        val offsetVector = Vector(width() / (4f), height() / (4f))
+        val offsetVector = Vector(width() / (4.0), height() / (4.0))
         return RectangleEntity(
             lowerBound.plus(offsetVector),
             upperBound.minus(offsetVector)
@@ -29,10 +31,10 @@ class GameBoundary(dimensions: Vector) : RectangleEntity(Vector.zero(), dimensio
     }
 
     private fun getRandomBallSpawnPosition(): Vector {
-        return upperBound.minus(lowerBound).times(0.5f).plus(
+        return upperBound.minus(lowerBound).times(0.5).plus(
             lowerBound.plus(
                 Vector.randomUnit()
-                    .times(0.25f * min(height(), width()))
+                    .times(0.25 * min(height(), width()))
             )
         )
     }

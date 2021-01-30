@@ -2,11 +2,11 @@ package com.example.android.ballBounce.utility
 
 class Rectangle(val lowerBounds: Vector,val upperBounds: Vector) {
 
-    fun width(): Float {
+    fun width(): Double {
         return upperBounds.x - lowerBounds.x
     }
 
-    fun height(): Float {
+    fun height(): Double {
         return upperBounds.y - lowerBounds.y
     }
 
@@ -16,7 +16,7 @@ class Rectangle(val lowerBounds: Vector,val upperBounds: Vector) {
     }
 
     fun isValid(): Boolean {
-        return ((this.width() != 0f) && (this.height() != 0f))
+        return ((this.width() != 0.0) && (this.height() != 0.0))
     }
 
     companion object {

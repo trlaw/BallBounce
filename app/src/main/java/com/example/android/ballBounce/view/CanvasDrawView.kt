@@ -23,7 +23,7 @@ class CanvasDrawView @JvmOverloads constructor(
 
     override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
         super.onSizeChanged(w, h, oldw, oldh)
-        drawingSpace = Rectangle(Vector.zero(),Vector(w.toFloat(),h.toFloat()))
+        drawingSpace = Rectangle(Vector.zero(),Vector(w.toDouble(),h.toDouble()))
         sizeChangeCallback?.invoke(w, h)
     }
 

@@ -1,4 +1,4 @@
-package com.example.android.ballBounce.gameSimulation
+package com.example.android.ballBounce.gameSimulation.gameEntities
 
 import com.example.android.ballBounce.paintableShapes.PaintableShape
 

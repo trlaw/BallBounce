@@ -1,6 +1,8 @@
-package com.example.android.ballBounce.gameSimulation
+package com.example.android.ballBounce.gameSimulation.gameEntities
 
-const val PLAYER_BARRIER_WIDTH = 4f
+import com.example.android.ballBounce.gameSimulation.gameEntities.BarrierFactory
+
+const val PLAYER_BARRIER_WIDTH = 4.0
 
 class PlayerBarrierFactory: BarrierFactory() {
     override fun create(): BarrierEntity {

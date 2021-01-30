@@ -3,7 +3,7 @@ package com.example.android.ballBounce.view
 import android.view.MotionEvent
 import com.example.android.ballBounce.utility.Vector
 
-const val MIN_LINE_LENGTH = 20f //Minimum touch move before line emitted
+const val MIN_LINE_LENGTH = 20.0 //Minimum touch move before line emitted
 
 class LineTouchManager(val lineCompleteCallback: (Pair<Vector, Vector>) -> Unit) {
     private var pointerList = mutableListOf<LinePointer>()
@@ -18,22 +18,22 @@ class LineTouchManager(val lineCompleteCallback: (Pair<Vector, Vector>) -> Unit)
         }
     }
 
-    fun handleTouchDown(event: MotionEvent, actionIndex: Int) {
+    private fun handleTouchDown(event: MotionEvent, actionIndex: Int) {
         pointerList.add(
             LinePointer(
                 event.getPointerId(actionIndex),
-                Vector(event.getX(actionIndex), event.getY(actionIndex))
+                Vector(event.getX(actionIndex).toDouble(), event.getY(actionIndex).toDouble())
             )
         )
     }
 
-    fun handleTouchMove(event: MotionEvent) {
+    private fun handleTouchMove(event: MotionEvent) {
         for (i in 0 until event.pointerCount) {
             val indexPointerId = event.getPointerId(i)
             val indexLinePointer =
                 pointerList.find { it -> it.pointerId == indexPointerId }
             if (indexLinePointer != null) {
-                val moveEndVector = Vector(event.getX(i), event.getY(i))
+                val moveEndVector = Vector(event.getX(i).toDouble(), event.getY(i).toDouble())
                 if (moveEndVector.minus(indexLinePointer.lineStart).mag() >= MIN_LINE_LENGTH) {
                     lineCompleteCallback(Pair(indexLinePointer.lineStart, moveEndVector))
                     indexLinePointer.lineStart = moveEndVector
@@ -42,7 +42,7 @@ class LineTouchManager(val lineCompleteCallback: (Pair<Vector, Vector>) -> Unit)
         }
     }
 
-    fun handleTouchUp(event: MotionEvent, actionIndex: Int) {
+    private fun handleTouchUp(event: MotionEvent, actionIndex: Int) {
         pointerList = pointerList.filter { linePointer ->
             linePointer.pointerId != event.getPointerId(actionIndex)
         } as MutableList<LinePointer>
