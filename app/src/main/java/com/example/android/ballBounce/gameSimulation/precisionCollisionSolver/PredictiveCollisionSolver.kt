@@ -1,6 +1,6 @@
 package com.example.android.ballBounce.gameSimulation.precisionCollisionSolver
 
-import com.example.android.ballBounce.gameSimulation.BallEntity
+import com.example.android.ballBounce.gameSimulation.gameEntities.BallEntity
 import com.example.android.ballBounce.gameSimulation.gameEntities.CollidableEntity
 import com.example.android.ballBounce.gameSimulation.CollisionGrid
 import kotlin.Double.Companion.NEGATIVE_INFINITY

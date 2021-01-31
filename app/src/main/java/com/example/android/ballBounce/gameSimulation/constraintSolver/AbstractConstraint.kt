@@ -3,7 +3,7 @@ package com.example.android.ballBounce.gameSimulation.constraintSolver
 abstract class AbstractConstraint(private val inactiveTimeout: Double) {
 
     //Should accumulate as steps processed
-    private var timeSinceLastActive = 0.0
+    protected var timeSinceLastActive = 0.0
 
     //May be purged if timedOut
     fun timedOut(): Boolean {
@@ -33,4 +33,6 @@ abstract class AbstractConstraint(private val inactiveTimeout: Double) {
     //Apply computed corrective impulses to affected objects
     abstract fun applyCorrectiveImpulses()
 
+    //Signals the start of time step for constraints which depend on initial quantities
+    abstract fun resetInitialQuantities()
 }

@@ -1,9 +1,6 @@
-package com.example.android.ballBounce.gameSimulation
+package com.example.android.ballBounce.gameSimulation.gameEntities
 
-import com.example.android.ballBounce.gameSimulation.gameEntities.BallEntity
-import com.example.android.ballBounce.gameSimulation.gameEntities.CollidableEntity
-import com.example.android.ballBounce.gameSimulation.gameEntities.GameEntity
-import com.example.android.ballBounce.gameSimulation.gameEntities.PaintableEntity
+import com.example.android.ballBounce.gameSimulation.CollisionGrid
 import com.example.android.ballBounce.paintableShapes.PaintableLine
 import com.example.android.ballBounce.paintableShapes.PaintableShape
 import com.example.android.ballBounce.utility.Vector
@@ -88,14 +85,6 @@ open class BarrierEntity : GameEntity(), PaintableEntity, CollidableEntity {
         //Adjust velocity for bounce
         ballEntity.velocity = vTangentToBarrier.plus(vNormToBarrier.times(-BARRIER_COR))
 
-        //Avoid ball getting stuck due to gravity re-initiating collision.  Subtract gravity
-        //component normal to barrier for next position update & prevent gravity update from
-        //3rd party object before next position update.
-        ballEntity.ignoreGravityUpdateOneShot = true
-        ballEntity.gravity =
-            ballEntity.gravity.minus(
-                barrierUnitNormal().times(barrierUnitNormal().dot(ballEntity.gravity))
-            )
     }
 
     override fun markCollisionGrid(collisionGrid: CollisionGrid) {

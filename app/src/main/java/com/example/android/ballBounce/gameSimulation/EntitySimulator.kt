@@ -1,8 +1,8 @@
 package com.example.android.ballBounce.gameSimulation
 
 import android.util.Log
+import com.example.android.ballBounce.gameSimulation.constraintSolver.ConstraintSolver
 import com.example.android.ballBounce.gameSimulation.gameEntities.*
-import com.example.android.ballBounce.gameSimulation.precisionCollisionSolver.PredictiveCollisionSolver
 import com.example.android.ballBounce.paintableShapes.PaintableShapeList
 import com.example.android.ballBounce.utility.Vector
 import kotlin.system.measureTimeMillis
@@ -10,18 +10,18 @@ import kotlin.system.measureTimeMillis
 
 const val BALL_ADD_TIME = 1.0
 const val BALL_LIMIT = 100
-const val GRAVITY_STRENGTH = 0.02
+const val GRAVITY_STRENGTH = 0.01
+const val INTERMEDIATE_TIME_STEPS = 1
 
 //As implemented, multiplied by ballDiameter to get minimum grid cell size.  There is an ideal
 //value in terms of execution time, which depends on the ratio of ball diameter to maximum entity
 //velocity per unit time.  Higher values result in fewer time steps, but longer executing steps,
 //since each entity must be checked against a greater number of entities for potential collision.
-const val GRID_SIZE = 2.0
-const val SUBSAMPLE_FACTOR: Int = 1
-
+const val GRID_SIZE = 1.05
 
 class EntitySimulator() {
 
+    private val constraintSolver = ConstraintSolver()
     private val gameBallFactory: BallEntityFactory = BallEntityFactory()
     private lateinit var collisionGrid: CollisionGrid
     private val entityList = mutableListOf<GameEntity>()
@@ -60,44 +60,46 @@ class EntitySimulator() {
         restartFlag = true
     }
 
-    fun updateState(dt: Double) {
+    fun updateState(dtTotal: Double) {
 
         if (entitySimulationState == EntitySimulationState.RUNNING) {
 
             //Add ball to game if spawn conditions satisfied
             tryAddBall()
+            val dt = dtTotal/ INTERMEDIATE_TIME_STEPS
+            repeat(INTERMEDIATE_TIME_STEPS) {
+                //Apply gravity to sensitive objects
+                applyGravity(dt)
 
-            //Apply gravity to sensitive objects
-            applyGravity()
+                //Populate collision grid with mobile objects
+                markCollisionGridWithMobileEntities()
 
-            //Populate collision grid with mobile objects
-            markCollisionGridWithMobileEntities()
-
-            val compTime = measureTimeMillis {
-                //Adjust mobile objects including collision influences
-                for (i in 1..SUBSAMPLE_FACTOR) {
-                PredictiveCollisionSolver.simulateMotion(getCollidableList(), collisionGrid, dt/ SUBSAMPLE_FACTOR)
+                val compTime = measureTimeMillis {
+                    constraintSolver.updateVelocities(collisionGrid, entityList, dt)
                 }
-            }
-            if ((simTime.toInt() % 50) == 0) {
-                Log.d(
-                    "BallPerformance",
-                    "${ballCount} balls, ${compTime} ms, ${compTime.toFloat() / ballCount.toFloat()} ms/ball"
-                )
-            }
-            //Remove mobile entities from collision grid since position may change on next step
-            unMarkMobileEntitiesFromGrid()
 
-            removeMarkedEntities() //Remove entity list items marked for removal
+                if ((simTime.toInt() % 50) == 0) {
+                    Log.d(
+                        "BallPerformance",
+                        "${ballCount} balls, ${compTime} ms, ${compTime.toFloat() / ballCount.toFloat()} ms/ball"
+                    )
+                }
+                //Remove mobile entities from collision grid since position may change on next step
+                unMarkMobileEntitiesFromGrid()
 
-            simTime += dt
+                removeMarkedEntities() //Remove entity list items marked for removal
+
+                updateMobileEntityPositions(dt)
+
+                simTime += dt
+            }
         }
         restartIfRequested()
     }
 
-    private fun applyGravity() {
+    private fun applyGravity(dt: Double) {
         for (gameEntity in entityList) {
-            if (gameEntity is GravitySensitiveEntity) {
+            if (gameEntity is BallEntity) {
                 gameEntity.applyGravity(gravityVector)
             }
         }
@@ -189,12 +191,6 @@ class EntitySimulator() {
             }
         }
         return outputList
-    }
-
-    fun getCollidableList(): List<CollidableEntity> {
-        val collidableList: List<CollidableEntity> =
-            entityList.filter { it is CollidableEntity }.map { it as CollidableEntity }
-        return collidableList
     }
 
     //Initialization Methods

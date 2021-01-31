@@ -1,6 +1,6 @@
 package com.example.android.ballBounce.gameSimulation.gameEntities
 
-import com.example.android.ballBounce.gameSimulation.*
+import com.example.android.ballBounce.gameSimulation.CollisionGrid
 import com.example.android.ballBounce.paintableShapes.PaintableCircle
 import com.example.android.ballBounce.paintableShapes.PaintableShape
 import com.example.android.ballBounce.utility.Vector
@@ -11,6 +11,7 @@ import kotlin.math.min
 import kotlin.math.pow
 
 const val NEGATIVE_TIME_EPS = -0.0001
+const val GRAVITY_REDUCTION_ON_COLLISION = 0.01
 
 class BallEntity() : GameEntity(), CollidableEntity, PaintableEntity, MobileEntity,
     GravitySensitiveEntity {
@@ -21,9 +22,9 @@ class BallEntity() : GameEntity(), CollidableEntity, PaintableEntity, MobileEnti
     var colorIndex: Int = 0
     var cOr: Double = 1.0 //Bounciness factor
     var collisionGridCell: Pair<Int, Int>? = null
-    val maxSpeed = 10.0
+    val maxSpeed = 20.0
     var gravity = Vector(0.0, 0.0)
-    var ignoreGravityUpdateOneShot = false
+    var reduceGravity = false
 
     override fun travel(dt: Double): Unit {
 
@@ -36,7 +37,13 @@ class BallEntity() : GameEntity(), CollidableEntity, PaintableEntity, MobileEnti
     }
 
     fun applyGravityAcceleration(dt: Double) {
-        velocity = velocity.plus(gravity.times(dt))
+        velocity =
+            velocity.plus(
+                gravity.times(
+                    dt * (if (reduceGravity) GRAVITY_REDUCTION_ON_COLLISION else 1.0)
+                )
+            )
+        reduceGravity = false
     }
 
     override fun handleCollision(otherEntity: CollidableEntity, basedOnDt: Double) {
@@ -172,11 +179,7 @@ class BallEntity() : GameEntity(), CollidableEntity, PaintableEntity, MobileEnti
     }
 
     override fun applyGravity(gravityVect: Vector) {
-        if (ignoreGravityUpdateOneShot) {
-            ignoreGravityUpdateOneShot = false
-        } else {
-            gravity = gravityVect
-        }
+        gravity = gravityVect
     }
 
     private fun ballsSeparating(dR: Vector, dV: Vector, dt: Double): Boolean {

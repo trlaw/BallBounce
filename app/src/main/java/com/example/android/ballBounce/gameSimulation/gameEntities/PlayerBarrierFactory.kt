@@ -1,7 +1,5 @@
 package com.example.android.ballBounce.gameSimulation.gameEntities
 
-import com.example.android.ballBounce.gameSimulation.gameEntities.BarrierFactory
-
 const val PLAYER_BARRIER_WIDTH = 4.0
 
 class PlayerBarrierFactory: BarrierFactory() {

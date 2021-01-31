@@ -16,7 +16,6 @@ class MainActivityViewModel() : ViewModel() {
 
     }
 
-
     fun initialize(screenDims: Vector) {
         entitySim = entitySim ?: EntitySimulator()
         entitySim!!.initialize(screenDims)

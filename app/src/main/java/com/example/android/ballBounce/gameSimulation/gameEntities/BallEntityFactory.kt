@@ -1,7 +1,7 @@
 package com.example.android.ballBounce.gameSimulation.gameEntities
 
 const val NUM_COLORS = 4
-const val BASE_COR = 0.9
+const val BASE_COR = 0.5
 const val BASE_BALL_RADIUS = 30.0
 const val MAX_SPEED = BASE_BALL_RADIUS / (5.0)
 
