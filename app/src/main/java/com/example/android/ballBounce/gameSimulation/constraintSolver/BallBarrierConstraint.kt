@@ -6,7 +6,8 @@ import com.example.android.ballBounce.utility.Vector
 import kotlin.math.abs
 import kotlin.math.pow
 
-const val BALL_BARRIER_BETA = 0.00025
+const val BALL_BARRIER_BETA = 0.5
+const val BARRIER_SLOP_FACTOR = 0.02
 
 class BallBarrierConstraint(
     private val ball: BallEntity,
@@ -17,6 +18,12 @@ class BallBarrierConstraint(
 
     private var vInit: Vector = Vector.zero()
     var impulse = Vector.zero()
+    var cachedAccumulatedImpulse = Vector.zero()
+
+    override fun applyWarmStartImpulses() {
+        ball.velocity = ball.velocity.plus(cachedAccumulatedImpulse)
+        cachedAccumulatedImpulse = Vector.zero()
+    }
 
     override fun satisfied(): Boolean {
         // Log.d("ConstraintState", "Ball Position: ${ball.position.x}, ${ball.position.y}")
@@ -47,10 +54,14 @@ class BallBarrierConstraint(
     }
 
     override fun evalImpulses(dt: Double) {
+        val thisC = evalC()
         val lambda =
             (-1.0) *
                     ((jacobian().dot(ball.velocity.plus(vInit.times(ball.cOr))) +
-                            (BALL_BARRIER_BETA / dt) * evalC()) / (jacobian().mag().pow(2)))
+                            (BALL_BARRIER_BETA / dt) *
+                            (if (thisC < (-1.0) * ball.radius * BARRIER_SLOP_FACTOR)
+                                    (thisC + ball.radius * BARRIER_SLOP_FACTOR) else 0.0)) / (jacobian().mag()
+                        .pow(2)))
         impulse = jacobian().times(lambda)
     }
 
@@ -60,6 +71,7 @@ class BallBarrierConstraint(
 
     override fun applyCorrectiveImpulses() {
         ball.velocity = ball.velocity.plus(impulse)
+       // cachedAccumulatedImpulse = cachedAccumulatedImpulse.plus(impulse)
         timeSinceLastActive = 0.0
     }
 

@@ -5,19 +5,21 @@ import com.example.android.ballBounce.gameSimulation.constraintSolver.Constraint
 import com.example.android.ballBounce.gameSimulation.gameEntities.*
 import com.example.android.ballBounce.paintableShapes.PaintableShapeList
 import com.example.android.ballBounce.utility.Vector
-import kotlin.system.measureTimeMillis
+import kotlin.math.roundToLong
+import kotlin.system.measureNanoTime
 
 
 const val BALL_ADD_TIME = 1.0
-const val BALL_LIMIT = 100
+const val BALL_LIMIT = 150
 const val GRAVITY_STRENGTH = 0.01
 const val INTERMEDIATE_TIME_STEPS = 1
+const val TIME_AVERAGING_CYCLES = 50
 
 //As implemented, multiplied by ballDiameter to get minimum grid cell size.  There is an ideal
 //value in terms of execution time, which depends on the ratio of ball diameter to maximum entity
 //velocity per unit time.  Higher values result in fewer time steps, but longer executing steps,
 //since each entity must be checked against a greater number of entities for potential collision.
-const val GRID_SIZE = 1.05
+const val GRID_SIZE = 1.001
 
 class EntitySimulator() {
 
@@ -32,6 +34,9 @@ class EntitySimulator() {
     var gravityVector = Vector.zero()
     var simTime = 0.0
     var ballCount: Int = 0
+    var reportCounter: Int = 0
+    var collisionGridTimeAccumulated: Double = 0.0
+    var totalTimeAccumulated: Double = 0.0
 
     //Game Simulation Lifecycle Methods
 
@@ -64,34 +69,42 @@ class EntitySimulator() {
 
         if (entitySimulationState == EntitySimulationState.RUNNING) {
 
+            if (reportCounter == TIME_AVERAGING_CYCLES) {
+                reportCounter = 0
+                Log.d(
+                    "Ball Performance",
+                    "${ballCount} balls: ${
+                        ( totalTimeAccumulated /
+                                (ballCount *
+                                        TIME_AVERAGING_CYCLES)).roundToLong()
+                    } total ns/ball, ${(collisionGridTimeAccumulated / (ballCount * TIME_AVERAGING_CYCLES)).roundToLong()} collision grid maintenance ns/ball"
+                )
+                totalTimeAccumulated = 0.0
+                collisionGridTimeAccumulated = 0.0
+            }
             //Add ball to game if spawn conditions satisfied
-            tryAddBall()
-            val dt = dtTotal/ INTERMEDIATE_TIME_STEPS
-            repeat(INTERMEDIATE_TIME_STEPS) {
-                //Apply gravity to sensitive objects
-                applyGravity(dt)
+            totalTimeAccumulated += measureNanoTime {
+                tryAddBall()
+                val dt = dtTotal / INTERMEDIATE_TIME_STEPS
+                repeat(INTERMEDIATE_TIME_STEPS) {
+                    //Apply gravity to sensitive objects
+                    applyGravity(dt)
 
-                //Populate collision grid with mobile objects
-                markCollisionGridWithMobileEntities()
+                    //Populate collision grid with mobile objects
+                    collisionGridTimeAccumulated += measureNanoTime { markCollisionGridWithMobileEntities() }
 
-                val compTime = measureTimeMillis {
                     constraintSolver.updateVelocities(collisionGrid, entityList, dt)
+
+                    //Remove mobile entities from collision grid since position may change on next step
+                    collisionGridTimeAccumulated += measureNanoTime { unMarkMobileEntitiesFromGrid() }
+
+                    removeMarkedEntities() //Remove entity list items marked for removal
+
+                    updateMobileEntityPositions(dt)
+
+                    simTime += dt
                 }
-
-                if ((simTime.toInt() % 50) == 0) {
-                    Log.d(
-                        "BallPerformance",
-                        "${ballCount} balls, ${compTime} ms, ${compTime.toFloat() / ballCount.toFloat()} ms/ball"
-                    )
-                }
-                //Remove mobile entities from collision grid since position may change on next step
-                unMarkMobileEntitiesFromGrid()
-
-                removeMarkedEntities() //Remove entity list items marked for removal
-
-                updateMobileEntityPositions(dt)
-
-                simTime += dt
+                reportCounter++
             }
         }
         restartIfRequested()

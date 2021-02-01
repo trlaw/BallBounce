@@ -22,7 +22,7 @@ class BallEntity() : GameEntity(), CollidableEntity, PaintableEntity, MobileEnti
     var colorIndex: Int = 0
     var cOr: Double = 1.0 //Bounciness factor
     var collisionGridCell: Pair<Int, Int>? = null
-    val maxSpeed = 20.0
+    val maxSpeed = 40.0
     var gravity = Vector(0.0, 0.0)
     var reduceGravity = false
 

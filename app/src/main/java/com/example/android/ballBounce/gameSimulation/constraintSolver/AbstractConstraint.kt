@@ -33,6 +33,9 @@ abstract class AbstractConstraint(private val inactiveTimeout: Double) {
     //Apply computed corrective impulses to affected objects
     abstract fun applyCorrectiveImpulses()
 
+    //Apply warm start accumulated impulse from last time constraint active
+    abstract fun applyWarmStartImpulses()
+
     //Signals the start of time step for constraints which depend on initial quantities
     abstract fun resetInitialQuantities()
 }
